@@ -9,7 +9,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from english.models import Question, Quiz, Lesson, Student, Teacher
-from english.serializers import QuestionSerializer, QuizSerializer, LessonSerializer, UserSerializer, StudentSerializer
+from english.serializers import QuestionSerializer, QuizSerializer, LessonSerializer, UserSerializer, StudentUserSerializer
 from rest_framework import generics, permissions
 from rest_framework.response import Response
 from knox.models import AuthToken
@@ -157,6 +157,14 @@ class LessonAPI(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
+# def set_next_lesson(self):
+#     if self.current_lesson_status:
+#         self.current_lesson.pk = self.current_lesson.pk + 1
+#     return self.current_lesson.pk
+#     # self.current_lesson =
+# def get_next_lesson():
+#     return self.current_lesson
+
 
 
 # class StudentAPI(APIView):
@@ -171,12 +179,12 @@ class LessonAPI(APIView):
     #
     # def get(self, request, pk):
     #     snippet = self.get_object(pk)
-    #     serializer = StudentSerializer(snippet)
+    #     serializer = StudentUserSerializer(snippet)
     #     return Response(serializer.data)
 
     # def put(self, request, pk):
     #     snippet = self.get_object(pk)
-    #     serializer = StudentSerializer(snippet, data=request.data)
+    #     serializer = StudentUserSerializer(snippet, data=request.data)
     #     if serializer.is_valid():
     #         serializer.save()
     #         return Response(serializer.data, status=status.HTTP_200_OK)
@@ -222,6 +230,57 @@ class TeacherAPI(generics.GenericAPIView):
         "user": UserSerializer(user, context=self.get_serializer_context()).data,
         "token": AuthToken.objects.create(user)[1]
         })
+
+
+
+class NextLessonAPI(APIView):
+    # authentication_classes = [TokenAuthentication]
+    # permission_classes = [IsAuthenticated]
+
+    def get_object(self, pk):
+        try:
+            return Student.objects.get(current_lesson=pk)
+        except Lesson.DoesNotExist:
+            raise Http404
+
+    def get(self, request, pk):
+        snippet = self.get_object(pk)
+        serializer = LessonSerializer(snippet)
+        return Response(serializer.data)
+
+    def put(self, request, pk):
+        snippet = self.get_object(pk)
+        serializer = LessonSerializer(snippet, data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def post(self, request, format=None):
+        print(dict(request.data))
+        serializer = LessonSerializer(data=request.data)
+        if serializer.is_valid():
+            # question = Question.objects.get(id=dict(request.data)['statement'][0])
+            # token = Token.objects.create(user=user)
+            # print(token.key)
+            serializer.save()
+            # convert_speech_to_text(request=request)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 def get_question_quiz(pk):
     qq = Question.object.all(quiz=pk)

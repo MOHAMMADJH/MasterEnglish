@@ -17,7 +17,7 @@ from django.contrib import admin
 from django.urls import path, include
 from knox import views as knox_views
 
-from english.views import QuestionAPI, QuizAPI, LessonAPI, RegisterAPI, StudentAPI, TeacherAPI, LoginAPI
+from english.views import QuestionAPI, QuizAPI, LessonAPI, RegisterAPI, StudentAPI, TeacherAPI, LoginAPI, NextLessonAPI
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -27,6 +27,7 @@ urlpatterns = [
     path('StudentAPI/', StudentAPI.as_view()),
     path('TeacherAPI/', TeacherAPI.as_view()),
     path('LessonAPI/<int:pk>/', LessonAPI.as_view()),
+    path('NextLessonAPI/<int:pk>/', NextLessonAPI.as_view()),
     path('api/register/', RegisterAPI.as_view(), name='register'),
     path('api-auth/', include('rest_framework.urls')),
     path('api/login/', LoginAPI.as_view(), name='login'),

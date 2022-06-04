@@ -1,4 +1,3 @@
-
 # Create your models here.
 from django.db import models
 from django.contrib.auth.models import AbstractUser
@@ -23,21 +22,19 @@ class User(AbstractUser):
     # # REQUIRED_FIELDS = ['username']
 
 
-
-
 class Quiz(models.Model):
     quiz_name = models.CharField(max_length=200)
-
 
     def __str__(self):
         return self.quiz_name
 
     def get_absolute_url(self):
-        return f"http://127.0.0.1:8000/QuizAPI/{self.pk}/"
+        return f"http://127.0.0.1:8000/LessonAPI/"
 
     @property
     def endpoint(self):
         return self.get_absolute_url()
+
     # @property
     # def path(self):
     #     return f"/QuizAPI/{self.pk}/"
@@ -46,6 +43,14 @@ class Quiz(models.Model):
     def question(self):
         return self.question_set.all()
 
+class English(models.Model):
+    """
+    The first part Listening:
+    """
+    lesson_category= models.CharField(max_length=100,default="listening")
+
+    def __str__(self):
+        return self.lesson_category
 class Lesson(models.Model):
     """
     lesson from listening and speaking
@@ -54,11 +59,16 @@ class Lesson(models.Model):
     exercises = models.CharField(max_length=200)
     objective = models.TextField()
     exam_mark = models.FloatField()
-    quiz = models.ForeignKey(Quiz, on_delete=models.CASCADE ,default=1)
+    quiz = models.ForeignKey(Quiz, on_delete=models.CASCADE, default=1)
+    lesson_number = models.IntegerField(unique=True)
+    category = models.ForeignKey(English,on_delete=models.CASCADE)
+
 
     def __str__(self):
         return self.lesson_name
+
     def get_absolute_url(self):
+        endpoint = Student.stu_endpoint
         return f"http://127.0.0.1:8000/QuizAPI/{self.quiz.pk}/"
 
     @property
@@ -69,11 +79,12 @@ class Lesson(models.Model):
     def content(self):
         return self.content_set.all()
 
+
 class Content(models.Model):
     content_name = models.CharField(max_length=50)
     audio_file = models.FileField(upload_to='musics/', validators=[validate_is_audio], null=True)
     video_content = models.FileField(upload_to='video/', null=True, validators=[validate_is_video])
-    lesson = models.ForeignKey(Lesson, on_delete=models.CASCADE ,default=1)
+    lesson = models.ForeignKey(Lesson, on_delete=models.CASCADE, default=1)
 
     def __str__(self):
         return self.content_name
@@ -117,14 +128,15 @@ class Question(models.Model):
         return self.question
 
     @property
+    def match_answer(self):
+        return self.questionsmatchanswer_set.all()
+
+    @property
     def answer(self):
         return self.answer_set.all()
 
-
     class META:
         ordering = "id"
-
-
 
 
 class Answer(models.Model):
@@ -159,7 +171,7 @@ class QuestionsMatchAnswer(models.Model):
     b_match = models.CharField(max_length=200)
 
     def __str__(self):
-        return self.a_match
+        return self.question.question
 
 
 class Student(models.Model):
@@ -167,11 +179,21 @@ class Student(models.Model):
     Student
     """
     user = models.ForeignKey(User, on_delete=models.CASCADE)
-    current_lesson = models.IntegerField(default=1)
+    current_lesson = models.ForeignKey(Lesson, on_delete=models.CASCADE, default=1)
+    current_lesson_status = models.BooleanField(default=False)
 
-    def get_current_lesson(self):
-        pass
+    def set_next_lesson(self):
+        if self.current_lesson_status:
+            self.current_lesson.pk = self.current_lesson.pk + 1
+        return self.current_lesson.pk
         # self.current_lesson =
+
+    @property
+    def get_next_lesson(self):
+        return self.current_lesson
+    @property
+    def stu_endpoint(self):
+        return f"http://127.0.0.1:8000/LessonAPI/{self.current_lesson.pk}"
 
     def __str__(self):
         return str(self.user.username)
@@ -203,7 +225,7 @@ class UserAnswer(models.Model):
     answers = models.ForeignKey(Answer, on_delete=models.CASCADE)
 
     def __str__(self):
-        return self.answers
+        return self.answers.answer
 
     class Meta:
         ordering = ('student', 'questions',)
@@ -254,24 +276,7 @@ class StudentCourse(models.Model):
         return self.stu.name
 
 
-class Listening(models.Model):
-    """
-    The first part Listening:
-    """
-    lesson = models.ForeignKey(EnglishM, on_delete=models.CASCADE)
 
-    def __str__(self):
-        return self.lesson.description
-
-
-class Speaking(models.Model):
-    """
-    The first part Listening:
-    """
-    lesson = models.ForeignKey(EnglishM, on_delete=models.CASCADE)
-
-    def __str__(self):
-        return self.lesson.description
 
 
 class Topic(models.Model):
